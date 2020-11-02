@@ -1,3 +1,9 @@
+CREATE DATABASE archiver;
+
+CREATE USER archiver@localhost IDENTIFIED BY 'archiver';
+GRANT ALL PRIVILEGES ON archiver.* TO archiver@localhost;
+FLUSH PRIVILEGES;
+
 CREATE TABLE `source` (
 	`no` BIGINT(20) NOT NULL AUTO_INCREMENT,
 	`description` VARCHAR(256) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
