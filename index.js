@@ -8,8 +8,8 @@ const exec = util.promisify(require("child_process").exec);
 const main = async () => {
     const connection = await mysql.createConnection({
         host: "localhost",
-        user: "root",
-        password: "mariadb",
+        user: "archiver",
+        password: "archiver",
         database: "archiver"
     });
     connection.config.namedPlaceholders = true;
