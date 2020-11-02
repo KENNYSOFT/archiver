@@ -8,7 +8,7 @@ CREATE TABLE `source` (
 	`created_at` DATETIME NOT NULL DEFAULT current_timestamp(),
 	`updated_at` DATETIME NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
 	`interval` TIME NOT NULL DEFAULT '00:10:00',
-	`last_archived_at` DATETIME NULL DEFAULT NULL,
+	`last_checked_at` DATETIME NULL DEFAULT NULL,
 	PRIMARY KEY (`no`) USING BTREE
 )
 COLLATE='utf8mb4_unicode_ci'

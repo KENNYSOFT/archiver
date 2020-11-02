@@ -14,7 +14,7 @@ const main = async () => {
     });
     connection.config.namedPlaceholders = true;
     
-    const [sources] = await connection.execute("SELECT s.no, s.`type`, s.url, s.command FROM archiver.source s WHERE s.last_archived_at IS NULL OR s.last_archived_at + s.interval < NOW();");
+    const [sources] = await connection.execute("SELECT s.no, s.`type`, s.url, s.command FROM archiver.source s WHERE s.last_checked_at IS NULL OR s.last_checked_at + s.interval < NOW();");
     
     for (const source of sources) {
         try {
@@ -25,6 +25,7 @@ const main = async () => {
                 content = await res.text();
                 if (res.status != 200) {
                     await connection.execute("INSERT INTO archiver.error_log (source_no, http_status_code, message) VALUES (?, ?, ?);", [source.no, res.status, content]);
+                    await connection.execute("UPDATE archiver.source s SET s.last_checked_at = NOW() WHERE s.no = ?;", [source.no]);
                     continue;
                 }
             } else if (source.command) {
@@ -54,10 +55,10 @@ const main = async () => {
             }
 
             await connection.execute("INSERT INTO archiver.archive (source_no, revision, content) VALUES (:source_no, :revision, :content);", newArchive);
-            await connection.execute("UPDATE archiver.source s SET s.last_archived_at = NOW() WHERE s.no = ?;", [source.no]);
         } catch (e) {
             await connection.execute("INSERT INTO archiver.error_log (source_no, message) VALUES (?, ?);", [source.no, e.toString()]);
         }
+        await connection.execute("UPDATE archiver.source s SET s.last_checked_at = NOW() WHERE s.no = ?;", [source.no]);
     }
 }
 
