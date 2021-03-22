@@ -14,7 +14,7 @@ const main = async () => {
     });
     connection.config.namedPlaceholders = true;
     
-    const [sources] = await connection.execute("SELECT s.no, s.`type`, s.url, s.command FROM archiver.source s WHERE s.active = 1 AND (s.last_checked_at IS NULL OR ADDTIME(s.last_checked_at, s.interval) < NOW());");
+    const [sources] = await connection.execute("SELECT s.no, s.`type`, s.url, s.command, s.update_hook FROM archiver.source s WHERE s.active = 1 AND (s.last_checked_at IS NULL OR ADDTIME(s.last_checked_at, s.interval) < NOW());");
     
     for (const source of sources) {
         try {
@@ -25,11 +25,11 @@ const main = async () => {
                 content = await res.text();
                 if (res.status != 200) {
                     await connection.execute("INSERT INTO archiver.error_log (source_no, http_status_code, message) VALUES (?, ?, ?);", [source.no, res.status, content]);
-                    await connection.execute("UPDATE archiver.source s SET s.last_checked_at = NOW() WHERE s.no = ?;", [source.no]);
+                    await connection.execute("UPDATE archiver.source s SET s.last_checked_at = NOW() WHERE s.no = :no;", source);
                     continue;
                 }
             } else if (source.command) {
-                const {stdout} = await exec(source.command.replace(/\\\r?\n/g, ""), {shell: "/bin/bash"});
+                const {stdout} = await exec(source.command.replace(/\\\r?\n/g, " "), {shell: "/bin/bash"});
                 content = stdout;
             }
             
@@ -39,9 +39,9 @@ const main = async () => {
 
             const newArchive = {source_no: source.no};
 
-            const [archives] = await connection.execute("SELECT a.revision, a.content FROM archiver.archive a WHERE a.source_no = ? AND a.content IS NOT NULL ORDER BY a.archived_at DESC;", [source.no]);
+            const [archives] = await connection.execute("SELECT a.revision, a.content FROM archiver.archive a WHERE a.source_no = :no AND a.content IS NOT NULL ORDER BY a.archived_at DESC LIMIT 1;", source);
+            const latestArchive = archives.length > 0 ? archives[0] : {};
             if (archives.length > 0) {
-                const latestArchive = archives[0];
                 if (content === latestArchive.content) {
                     newArchive.revision = latestArchive.revision;
                     newArchive.content = null;
@@ -54,6 +54,11 @@ const main = async () => {
                 newArchive.content = content;
             }
 
+            if (newArchive.content && source.update_hook) {
+                const availableObjects = {source, latestArchive, newArchive};
+                await exec(source.update_hook.replace(/\\\r?\n/g, " ").replace(/\$\{(source|latestArchive|newArchive)\.([^}]+)\}/g, (_, g1, g2) => availableObjects[g1][g2]), {shell: "/bin/bash"});
+            }
+
             await connection.execute("INSERT INTO archiver.archive (source_no, revision, content) VALUES (:source_no, :revision, :content);", newArchive);
         } catch (e) {
             let message = e.toString();
@@ -62,7 +67,7 @@ const main = async () => {
             }
             await connection.execute("INSERT INTO archiver.error_log (source_no, message) VALUES (?, ?);", [source.no, message]);
         }
-        await connection.execute("UPDATE archiver.source s SET s.last_checked_at = NOW() WHERE s.no = ?;", [source.no]);
+        await connection.execute("UPDATE archiver.source s SET s.last_checked_at = NOW() WHERE s.no = :no;", source);
     }
 }
 

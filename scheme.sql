@@ -48,3 +48,6 @@ CREATE TABLE `error_log` (
 COLLATE='utf8mb4_unicode_ci'
 ENGINE=InnoDB
 ;
+
+ALTER TABLE `source`
+	ADD COLUMN `update_hook` VARCHAR(2048) NULL DEFAULT NULL COMMENT 'revision이 올라갈 때 이 명령 실행 (ubuntu 기준)' COLLATE 'utf8mb4_unicode_ci' AFTER `command`;
