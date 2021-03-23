@@ -4,6 +4,7 @@ const mysql = require("mysql2/promise");
 const fetch = require("node-fetch");
 const util = require("util");
 const exec = util.promisify(require("child_process").exec);
+const {spawn} = require("child_process");
 
 const main = async () => {
     const connection = await mysql.createConnection({
@@ -57,7 +58,8 @@ const main = async () => {
 
             if (newArchive.content && source.update_hook) {
                 const availableObjects = {source, latestArchive, newArchive};
-                await exec(source.update_hook.replace(/\\\r?\n/g, " ").replace(/\$\{(source|latestArchive|newArchive)\.([^}]+)\}/g, (_, g1, g2) => availableObjects[g1][g2]), {shell: "/bin/bash"});
+                const subprocess = spawn("/bin/bash", ["-c", source.update_hook.replace(/\\\r?\n/g, " ").replace(/\$\{(source|latestArchive|newArchive)\.([^}]+)\}/g, (_, g1, g2) => availableObjects[g1][g2])], {detached: true, stdio: "ignore"});
+                subprocess.unref();
             }
         } catch (e) {
             let message = e.toString();
