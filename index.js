@@ -53,13 +53,12 @@ const main = async () => {
                 newArchive.revision = 1;
                 newArchive.content = content;
             }
+            await connection.execute("INSERT INTO archiver.archive (source_no, revision, content) VALUES (:source_no, :revision, :content);", newArchive);
 
             if (newArchive.content && source.update_hook) {
                 const availableObjects = {source, latestArchive, newArchive};
                 await exec(source.update_hook.replace(/\\\r?\n/g, " ").replace(/\$\{(source|latestArchive|newArchive)\.([^}]+)\}/g, (_, g1, g2) => availableObjects[g1][g2]), {shell: "/bin/bash"});
             }
-
-            await connection.execute("INSERT INTO archiver.archive (source_no, revision, content) VALUES (:source_no, :revision, :content);", newArchive);
         } catch (e) {
             let message = e.toString();
             if (e.stdout) {
