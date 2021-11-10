@@ -4,6 +4,8 @@ CREATE USER archiver@localhost IDENTIFIED BY 'archiver';
 GRANT ALL PRIVILEGES ON archiver.* TO archiver@localhost;
 FLUSH PRIVILEGES;
 
+USE archiver;
+
 CREATE TABLE `source` (
 	`no` BIGINT(20) NOT NULL AUTO_INCREMENT,
 	`description` VARCHAR(256) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
@@ -54,3 +56,18 @@ ALTER TABLE `source`
 
 ALTER TABLE `archive`
 	ADD INDEX `IX_source_no_revision` (`source_no`, `revision`);
+
+CREATE TABLE `error_message` (
+	`no` BIGINT(20) NOT NULL AUTO_INCREMENT,
+	`message` MEDIUMTEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	PRIMARY KEY (`no`) USING BTREE
+)
+COLLATE='utf8mb4_unicode_ci'
+ENGINE=InnoDB
+;
+
+INSERT INTO `error_message` (`no`, `message`) VALUES (`1`, '{"Message":"Object not found."}');
+
+ALTER TABLE `error_log`
+	ADD COLUMN `message_ref` BIGINT(20) NULL DEFAULT NULL AFTER `message`,
+	ADD CONSTRAINT `FK_error_log_error_message` FOREIGN KEY (`message_ref`) REFERENCES `error_message` (`no`) ON UPDATE RESTRICT ON DELETE RESTRICT;

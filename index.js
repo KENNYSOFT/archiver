@@ -25,7 +25,12 @@ const main = async () => {
                 const res = await fetch(source.url);
                 content = await res.text();
                 if (res.status != 200) {
-                    await connection.execute("INSERT INTO archiver.error_log (source_no, http_status_code, message) VALUES (?, ?, ?);", [source.no, res.status, content]);
+                    const [errorMessage] = await connection.execute("SELECT em.no FROM archiver.error_message em WHERE em.message = ?;", [content]);
+                    if (errorMessage.length > 0) {
+                        await connection.execute("INSERT INTO archiver.error_log (source_no, http_status_code, message_ref) VALUES (?, ?, ?);", [source.no, res.status, errorMessage[0].no]);
+                    } else {
+                        await connection.execute("INSERT INTO archiver.error_log (source_no, http_status_code, message) VALUES (?, ?, ?);", [source.no, res.status, content]);
+                    }
                     await connection.execute("UPDATE archiver.source s SET s.last_checked_at = NOW() WHERE s.no = :no;", source);
                     continue;
                 }
@@ -66,7 +71,12 @@ const main = async () => {
             if (e.stdout) {
                 message = e.stdout;
             }
-            await connection.execute("INSERT INTO archiver.error_log (source_no, message) VALUES (?, ?);", [source.no, message]);
+            const [errorMessage] = await connection.execute("SELECT em.no FROM archiver.error_message em WHERE em.message = ?;", [message]);
+            if (errorMessage.length > 0) {
+                await connection.execute("INSERT INTO archiver.error_log (source_no, message_ref) VALUES (?, ?);", [source.no, errorMessage[0].no]);
+            } else {
+                await connection.execute("INSERT INTO archiver.error_log (source_no, message) VALUES (?, ?);", [source.no, message]);
+            }
         }
         await connection.execute("UPDATE archiver.source s SET s.last_checked_at = NOW() WHERE s.no = :no;", source);
     }
