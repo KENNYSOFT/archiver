@@ -1,10 +1,10 @@
 #!/bin/node
 
-const mysql = require("mysql2/promise");
-const fetch = require("node-fetch");
-const util = require("util");
-const exec = util.promisify(require("child_process").exec);
-const {spawn} = require("child_process");
+import mysql from 'mysql2/promise';
+import fetch from 'node-fetch';
+import util from 'util';
+import {exec, spawn} from 'child_process';
+const execPromise = util.promisify(exec);
 
 const main = async () => {
     const connection = await mysql.createConnection({
@@ -14,9 +14,9 @@ const main = async () => {
         database: "archiver"
     });
     connection.config.namedPlaceholders = true;
-    
+
     const [sources] = await connection.execute("SELECT s.no, s.`type`, s.url, s.command, s.update_hook FROM archiver.source s WHERE s.active = 1 AND (s.last_checked_at IS NULL OR ADDTIME(s.last_checked_at, s.interval) < NOW());");
-    
+
     for (const source of sources) {
         try {
             let content;
@@ -30,10 +30,10 @@ const main = async () => {
                     continue;
                 }
             } else if (source.command) {
-                const {stdout} = await exec(source.command.replace(/\\\r?\n/g, " "), {shell: "/bin/bash"});
+                const {stdout} = await execPromise(source.command.replace(/\\\r?\n/g, " "), {shell: "/bin/bash"});
                 content = stdout;
             }
-            
+
             if (source.type === "json") {
                 content = JSON.stringify(JSON.parse(content), null, 2);
             }
