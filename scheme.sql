@@ -29,7 +29,6 @@ CREATE TABLE `archive` (
 	`archived_at` DATETIME NOT NULL DEFAULT current_timestamp(),
 	PRIMARY KEY (`no`) USING BTREE,
 	INDEX `FK_archive_source` (`source_no`) USING BTREE,
-	INDEX `IX_source_no_revision` (`source_no`, `revision`) USING BTREE,
 	CONSTRAINT `FK_archive_source` FOREIGN KEY (`source_no`) REFERENCES `archiver`.`source` (`no`) ON UPDATE RESTRICT ON DELETE RESTRICT
 )
 COLLATE='utf8mb4_unicode_ci'
@@ -52,3 +51,6 @@ ENGINE=InnoDB
 
 ALTER TABLE `source`
 	ADD COLUMN `update_hook` VARCHAR(2048) NULL DEFAULT NULL COMMENT 'revision이 올라갈 때 이 명령 실행 (ubuntu 기준)' COLLATE 'utf8mb4_unicode_ci' AFTER `command`;
+
+ALTER TABLE `archive`
+	ADD INDEX `IX_source_no_revision` (`source_no`, `revision`);
