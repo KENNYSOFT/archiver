@@ -71,3 +71,6 @@ INSERT INTO `error_message` (`no`, `message`) VALUES (`1`, '{"Message":"Object n
 ALTER TABLE `error_log`
 	ADD COLUMN `message_ref` BIGINT(20) NULL DEFAULT NULL AFTER `message`,
 	ADD CONSTRAINT `FK_error_log_error_message` FOREIGN KEY (`message_ref`) REFERENCES `error_message` (`no`) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+ALTER TABLE `source`
+	ADD COLUMN `header` VARCHAR(1024) NULL DEFAULT NULL COMMENT 'curl 사용할 때 붙일 header, 여러 줄이면 각 줄을 나눠서 붙임' COLLATE 'utf8mb4_unicode_ci' AFTER `url`;

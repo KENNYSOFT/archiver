@@ -15,14 +15,21 @@ const main = async () => {
     });
     connection.config.namedPlaceholders = true;
 
-    const [sources] = await connection.execute("SELECT s.no, s.`type`, s.url, s.command, s.update_hook FROM archiver.source s WHERE s.active = 1 AND (s.last_checked_at IS NULL OR ADDTIME(s.last_checked_at, s.interval) < NOW());");
+    const [sources] = await connection.execute("SELECT s.no, s.`type`, s.url, s.header, s.command, s.update_hook FROM archiver.source s WHERE s.active = 1 AND (s.last_checked_at IS NULL OR ADDTIME(s.last_checked_at, s.interval) < NOW());");
 
     for (const source of sources) {
         try {
             let content;
 
             if (source.url) {
-                const res = await fetch(source.url);
+                let headers = {};
+                if (source.header) {
+                    for (const line of source.header.split("\n")) {
+                        const [name, value] = line.split(": ");
+                        headers[name] = value;
+                    }
+                }
+                const res = await fetch(source.url, {headers});
                 content = await res.text();
                 if (res.status != 200) {
                     const [errorMessage] = await connection.execute("SELECT em.no FROM archiver.error_message em WHERE em.message = ?;", [content]);
