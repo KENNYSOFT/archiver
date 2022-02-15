@@ -26,7 +26,7 @@ const main = async () => {
                 if (source.header) {
                     for (const line of source.header.split("\n")) {
                         const [name, value] = line.split(": ");
-                        headers[name] = value;
+                        headers[name] = value.replace("\r", "");
                     }
                 }
                 const res = await fetch(source.url, {headers});
