@@ -19,6 +19,7 @@ const main = async () => {
 
     for (const source of sources) {
         try {
+            let contentArrayBuffer;
             let content;
 
             if (source.url) {
@@ -30,7 +31,8 @@ const main = async () => {
                     }
                 }
                 const res = await fetch(source.url, {headers});
-                content = await res.text();
+                contentArrayBuffer = await res.arrayBuffer();
+                content = new TextDecoder().decode(contentArrayBuffer);
                 if (res.status != 200) {
                     const [errorMessage] = await connection.execute("SELECT em.no FROM archiver.error_message em WHERE em.message = ?;", [content]);
                     if (errorMessage.length > 0) {
@@ -46,9 +48,16 @@ const main = async () => {
                 content = stdout;
             }
 
-            if (source.type === "json") {
-                content = JSON.stringify(JSON.parse(content), null, 2);
+            switch (source.type) {
+                case "json":
+                    content = JSON.stringify(JSON.parse(content), null, 2);
+                    break;
+
+                case "ext-x-key":
+                    content = Buffer.from(contentArrayBuffer).toString("base64");
+                    break;
             }
+            console.log(content);
 
             const newArchive = {source_no: source.no};
 
