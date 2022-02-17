@@ -15,7 +15,7 @@ const main = async () => {
     });
     connection.config.namedPlaceholders = true;
 
-    const [sources] = await connection.execute("SELECT s.no, s.`type`, s.url, s.header, s.command, s.update_hook FROM archiver.source s WHERE s.active = 1 AND (s.last_checked_at IS NULL OR ADDTIME(s.last_checked_at, s.interval) < NOW());");
+    const [sources] = await connection.execute("SELECT s.no, s.description, s.`type`, s.url, s.header, s.command, s.update_hook FROM archiver.source s WHERE s.active = 1 AND (s.last_checked_at IS NULL OR ADDTIME(s.last_checked_at, s.interval) < NOW());");
 
     for (const source of sources) {
         try {
