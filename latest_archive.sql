@@ -1,4 +1,4 @@
-SELECT s.`no`, s.description, s.`type`, l.revision, l.archived_at, LEFT(l.content, 256)
+SELECT s.`no`, s.description, s.`type`, l.revision, l.archived_at, LEFT(l.content, 4096)
 FROM (SELECT a.*
 	FROM archiver.archive a
 		INNER JOIN (SELECT source_no, MAX(revision) AS revision FROM archiver.archive GROUP BY source_no) a2 ON a.source_no = a2.source_no AND a.revision = a2.revision
