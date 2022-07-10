@@ -2,7 +2,7 @@
   "name": "archiver",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.mjs",
   "dependencies": {
     "mysql2": "^2.3.3",
     "node-fetch": "^3.2.6"
@@ -14,6 +14,5 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC",
-  "type": "module"
+  "license": "ISC"
 }
