@@ -25,13 +25,12 @@ const main = async () => {
             let content;
 
             if (source.url) {
-                let headers = {};
-                if (source.header) {
-                    for (const line of source.header.split("\n")) {
-                        const [name, value] = line.split(": ");
-                        headers[name] = value.replace("\r", "");
-                    }
-                }
+                const headers =
+                    (source.header &&
+                        Object.fromEntries(
+                            source.header?.split("\n")?.map((line) => line.replace("\r", "").split(": "))
+                        )) ||
+                    {};
                 const res = await fetch(source.url, { headers });
                 contentArrayBuffer = await res.arrayBuffer();
                 content = new TextDecoder().decode(contentArrayBuffer);
